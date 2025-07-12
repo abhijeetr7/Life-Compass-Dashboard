@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Compass Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for better scrolling */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .dashboard-container {
+            display: grid;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        @media (min-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: repeat(2, 1fr); /* Two columns on medium screens */
+            }
+        }
+        @media (min-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: repeat(3, 1fr); /* Three columns on large screens */
+            }
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .card-content {
+            flex-grow: 1;
+        }
+
+        /* Mood Log Specific */
+        .mood-emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .mood-emoji-button {
+            font-size: 2.5rem;
+            background: #f0f2f5;
+            border-radius: 12px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+        .mood-emoji-button:hover {
+            background-color: #e0e2e5;
+        }
+        .mood-emoji-button.selected {
+            background-color: #d1e7dd; /* Light green for selected */
+            border: 2px solid #28a745;
+        }
+
+        /* Pomodoro Timer Specific */
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+        .timer-controls button {
+            background-color: #4c51bf; /* Indigo */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .timer-controls button:hover {
+            background-color: #363b90;
+        }
+        .timer-controls button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        .timer-mode-toggle button {
+            background-color: #cbd5e0;
+            color: #2d3748;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .timer-mode-toggle button.active {
+            background-color: #4c51bf;
+            color: white;
+        }
+        .timer-mode-toggle button:hover:not(.active) {
+            background-color: #a0aec0;
+        }
+
+        /* To-Do List Specific */
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            max-height: 250px; /* Limit height for scrolling */
+            overflow-y: auto;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+        .todo-item.completed span {
+            text-decoration: line-through;
+            color: #a0aec0;
+        }
+        .todo-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .todo-item button {
+            background: none;
+            border: none;
+            color: #e53e3e;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        /* Weather Specific */
+        .weather-icon {
+            font-size: 3rem;
+            margin-right: 15px;
+            color: #4c51bf;
+        }
+        .weather-temp {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        .weather-description {
+            font-size: 1.2rem;
+            color: #4a5568;
+            text-transform: capitalize;
+        }
+        .weather-location {
+            font-size: 1rem;
+            color: #718096;
+        }
+
+        /* Quote Specific */
+        .quote-text {
+            font-style: italic;
+            color: #4a5568;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        .quote-author {
+            text-align: right;
+            font-weight: 500;
+            color: #718096;
+            margin-top: 10px;
+        }
+
+        /* Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+        .modal-close-button:hover {
+            color: #4a5568;
+        }
+
+        /* Message Box Styling */
+        .message-box-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message-box {
+            background-color: #4c51bf; /* Indigo */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .message-box.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-5 flex justify-center items-start min-h-screen">
+
+    <div class="dashboard-container">
+        <!-- Mood Log Card -->
+        <div class="card">
+            <h2 class="card-title"><i class="far fa-smile text-blue-600"></i> Mood Log</h2>
+            <div class="card-content flex flex-col items-center justify-center text-center">
+                <p class="text-gray-600 mb-4">How are you feeling today?</p>
+                <div id="currentMoodDisplay" class="text-6xl mb-4">😊</div>
+                <button id="logMoodButton" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition">
+                    Log Mood
+                </button>
+            </div>
+        </div>
+
+        <!-- To-Do List Card -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-tasks text-green-600"></i> To-Do List</h2>
+            <div class="card-content">
+                <div class="flex mb-4">
+                    <input type="text" id="todoInput" placeholder="Add a new task..." class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button id="addTodoButton" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-5 rounded-r-lg shadow-md transition">
+                        Add
+                    </button>
+                </div>
+                <ul id="todoList" class="todo-list">
+                    <!-- To-Do items will be dynamically added here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Pomodoro Timer Card -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-hourglass-half text-purple-600"></i> Pomodoro Timer</h2>
+            <div class="card-content flex flex-col items-center justify-center">
+                <div class="timer-mode-toggle flex gap-2 mb-4">
+                    <button id="workModeButton" class="active">Work</button>
+                    <button id="breakModeButton">Break</button>
+                </div>
+                <div id="timerDisplay" class="timer-display">25:00</div>
+                <div class="timer-controls flex gap-4">
+                    <button id="startButton">Start</button>
+                    <button id="pauseButton" disabled>Pause</button>
+                    <button id="resetButton" disabled>Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-cloud-sun text-yellow-600"></i> Weather</h2>
+            <div class="card-content flex flex-col items-center justify-center text-center">
+                <div id="weatherIcon" class="weather-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <div id="weatherTemp" class="weather-temp">--°C</div>
+                <div id="weatherDescription" class="weather-description">Loading...</div>
+                <div id="weatherLocation" class="weather-location">Fetching weather...</div>
+            </div>
+        </div>
+
+        <!-- Inspirational Quote Card -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-quote-right text-red-600"></i> Quote of the Day</h2>
+            <div class="card-content flex flex-col justify-center">
+                <p id="quoteText" class="quote-text">"Loading an inspiring quote..."</p>
+                <p id="quoteAuthor" class="quote-author">- Author</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood Log Modal -->
+    <div id="moodModal" class="modal-overlay">
+        <div class="modal-content relative">
+            <button class="modal-close-button" id="closeMoodModal">&times;</button>
+            <h3 class="text-2xl font-semibold mb-6 text-gray-800">Select Your Mood</h3>
+            <div class="mood-emoji-grid">
+                <button class="mood-emoji-button" data-emoji="�">😊</button>
+                <button class="mood-emoji-button" data-emoji="😄">😄</button>
+                <button class="mood-emoji-button" data-emoji="🤩">🤩</button>
+                <button class="mood-emoji-button" data-emoji="🥳">🥳</button>
+                <button class="mood-emoji-button" data-emoji="🙂">🙂</button>
+                <button class="mood-emoji-button" data-emoji="😐">😐</button>
+                <button class="mood-emoji-button" data-emoji="🤔">🤔</button>
+                <button class="mood-emoji-button" data-emoji="😔">😔</button>
+                <button class="mood-emoji-button" data-emoji="😢">😢</button>
+                <button class="mood-emoji-button" data-emoji="😠">😠</button>
+                <button class="mood-emoji-button" data-emoji="😤">😤</button>
+                <button class="mood-emoji-button" data-emoji="😴">😴</button>
+            </div>
+            <button id="saveMoodButton" class="mt-8 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg shadow-md transition">
+                Save Mood
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Message Box Container -->
+    <div id="messageBoxContainer" class="message-box-container"></div>
+
+    <script>
+        // --- Utility Functions ---
+
+        /**
+         * Displays a custom message box instead of alert().
+         * @param {string} message - The message to display.
+         * @param {string} type - Type of message (e.g., 'success', 'error', 'info').
+         * @param {number} duration - How long the message should be visible in ms.
+         */
+        function showMessageBox(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('messageBoxContainer');
+            const messageBox = document.createElement('div');
+            messageBox.className = `message-box ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white py-3 px-5 rounded-lg shadow-md flex items-center gap-2 transform translate-x-full opacity-0 transition-all duration-300 ease-out`;
+            messageBox.innerHTML = `
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : type === 'error' ? '<i class="fas fa-exclamation-triangle"></i>' : '<i class="fas fa-info-circle"></i>'}
+                <span>${message}</span>
+            `;
+            container.appendChild(messageBox);
+
+            // Animate in
+            setTimeout(() => {
+                messageBox.classList.add('translate-x-0', 'opacity-100');
+            }, 50);
+
+            // Animate out and remove
+            setTimeout(() => {
+                messageBox.classList.remove('translate-x-0', 'opacity-100');
+                messageBox.classList.add('translate-x-full', 'opacity-0');
+                messageBox.addEventListener('transitionend', () => {
+                    messageBox.remove();
+                }, { once: true });
+            }, duration);
+        }
+
+        /**
+         * Formats seconds into MM:SS string.
+         * @param {number} totalSeconds - Total seconds to format.
+         * @returns {string} Formatted time string.
+         */
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        // --- Mood Log Feature ---
+        const moodModal = document.getElementById('moodModal');
+        const logMoodButton = document.getElementById('logMoodButton');
+        const closeMoodModal = document.getElementById('closeMoodModal');
+        const moodEmojiButtons = document.querySelectorAll('.mood-emoji-button');
+        const saveMoodButton = document.getElementById('saveMoodButton');
+        const currentMoodDisplay = document.getElementById('currentMoodDisplay');
+
+        let selectedMoodEmoji = '';
+
+        /**
+         * Opens the mood selection modal.
+         */
+        function openMoodModal() {
+            moodModal.classList.add('show');
+            // Highlight previously selected mood if any
+            const today = new Date().toISOString().slice(0, 10);
+            const savedMoods = JSON.parse(localStorage.getItem('moodLogs') || '{}');
+            const todayMood = savedMoods[today];
+            if (todayMood) {
+                moodEmojiButtons.forEach(button => {
+                    if (button.dataset.emoji === todayMood) {
+                        button.classList.add('selected');
+                        selectedMoodEmoji = todayMood;
+                    } else {
+                        button.classList.remove('selected');
+                    }
+                });
+            } else {
+                 moodEmojiButtons.forEach(button => button.classList.remove('selected'));
+                 selectedMoodEmoji = '';
+            }
+        }
+
+        /**
+         * Closes the mood selection modal.
+         */
+        function closeMoodModalHandler() {
+            moodModal.classList.remove('show');
+        }
+
+        /**
+         * Handles emoji selection in the modal.
+         * @param {Event} event - The click event.
+         */
+        function handleEmojiSelection(event) {
+            moodEmojiButtons.forEach(button => button.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            selectedMoodEmoji = event.currentTarget.dataset.emoji;
+        }
+
+        /**
+         * Saves the selected mood to localStorage.
+         */
+        function saveMood() {
+            if (!selectedMoodEmoji) {
+                showMessageBox('Please select a mood before saving.', 'error');
+                return;
+            }
+            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            const moodLogs = JSON.parse(localStorage.getItem('moodLogs') || '{}');
+            moodLogs[today] = selectedMoodEmoji;
+            localStorage.setItem('moodLogs', JSON.stringify(moodLogs));
+            currentMoodDisplay.textContent = selectedMoodEmoji;
+            closeMoodModalHandler();
+            showMessageBox('Mood saved successfully!', 'success');
+        }
+
+        /**
+         * Loads and displays today's mood from localStorage.
+         */
+        function loadMood() {
+            const today = new Date().toISOString().slice(0, 10);
+            const moodLogs = JSON.parse(localStorage.getItem('moodLogs') || '{}');
+            if (moodLogs[today]) {
+                currentMoodDisplay.textContent = moodLogs[today];
+            } else {
+                currentMoodDisplay.textContent = '😊'; // Default if no mood logged
+            }
+        }
+
+        // Mood Log Event Listeners
+        logMoodButton.addEventListener('click', openMoodModal);
+        closeMoodModal.addEventListener('click', closeMoodModalHandler);
+        moodEmojiButtons.forEach(button => {
+            button.addEventListener('click', handleEmojiSelection);
+        });
+        saveMoodButton.addEventListener('click', saveMood);
+        moodModal.addEventListener('click', (e) => {
+            if (e.target === moodModal) {
+                closeMoodModalHandler();
+            }
+        });
+
+        // --- To-Do List Feature ---
+        const todoInput = document.getElementById('todoInput');
+        const addTodoButton = document.getElementById('addTodoButton');
+        const todoList = document.getElementById('todoList');
+
+        let todos = [];
+
+        /**
+         * Renders the To-Do list from the `todos` array.
+         */
+        function renderTodos() {
+            todoList.innerHTML = ''; // Clear existing list
+            todos.forEach((todo, index) => {
+                const li = document.createElement('li');
+                li.className = `todo-item ${todo.completed ? 'completed' : ''} flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0`;
+                li.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="checkbox" data-index="${index}" ${todo.completed ? 'checked' : ''} class="mr-3 h-5 w-5 text-green-600 rounded focus:ring-green-500">
+                        <span class="text-lg text-gray-800">${todo.text}</span>
+                    </div>
+                    <button data-index="${index}" class="delete-todo-button text-red-500 hover:text-red-700 transition">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                todoList.appendChild(li);
+            });
+            saveTodos();
+        }
+
+        /**
+         * Adds a new task to the To-Do list.
+         */
+        function addTodo() {
+            const taskText = todoInput.value.trim();
+            if (taskText) {
+                todos.push({ text: taskText, completed: false });
+                todoInput.value = '';
+                renderTodos();
+                showMessageBox('Task added!', 'success');
+            } else {
+                showMessageBox('Task cannot be empty.', 'error');
+            }
+        }
+
+        /**
+         * Toggles the completion status of a task.
+         * @param {number} index - The index of the task to toggle.
+         */
+        function toggleTodoCompletion(index) {
+            if (todos[index]) {
+                todos[index].completed = !todos[index].completed;
+                renderTodos();
+                showMessageBox(todos[index].completed ? 'Task completed!' : 'Task uncompleted!', 'info');
+            }
+        }
+
+        /**
+         * Deletes a task from the To-Do list.
+         * @param {number} index - The index of the task to delete.
+         */
+        function deleteTodo(index) {
+            if (todos[index]) {
+                todos.splice(index, 1);
+                renderTodos();
+                showMessageBox('Task deleted!', 'info');
+            }
+        }
+
+        /**
+         * Saves the current To-Do list to localStorage.
+         */
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        /**
+         * Loads the To-Do list from localStorage.
+         */
+        function loadTodos() {
+            const savedTodos = localStorage.getItem('todos');
+            if (savedTodos) {
+                todos = JSON.parse(savedTodos);
+            }
+            renderTodos();
+        }
+
+        // To-Do List Event Listeners
+        addTodoButton.addEventListener('click', addTodo);
+        todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+        todoList.addEventListener('click', (e) => {
+            if (e.target.type === 'checkbox') {
+                toggleTodoCompletion(parseInt(e.target.dataset.index));
+            } else if (e.target.closest('.delete-todo-button')) {
+                deleteTodo(parseInt(e.target.closest('.delete-todo-button').dataset.index));
+            }
+        });
+
+        // --- Pomodoro Timer Feature ---
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resetButton = document.getElementById('resetButton');
+        const workModeButton = document.getElementById('workModeButton');
+        const breakModeButton = document.getElementById('breakModeButton');
+
+        const WORK_TIME = 25 * 60; // 25 minutes
+        const BREAK_TIME = 5 * 60;  // 5 minutes
+
+        let timer;
+        let timeLeft = WORK_TIME;
+        let isRunning = false;
+        let currentMode = 'work'; // 'work' or 'break'
+
+        /**
+         * Updates the timer display.
+         */
+        function updateTimerDisplay() {
+            timerDisplay.textContent = formatTime(timeLeft);
+        }
+
+        /**
+         * Starts the Pomodoro timer.
+         */
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            resetButton.disabled = false;
+
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    isRunning = false;
+                    startButton.disabled = false;
+                    pauseButton.disabled = true;
+                    showMessageBox(`${currentMode === 'work' ? 'Work session' : 'Break session'} finished!`, 'info', 5000);
+                    // Automatically switch mode
+                    if (currentMode === 'work') {
+                        currentMode = 'break';
+                        timeLeft = BREAK_TIME;
+                        breakModeButton.classList.add('active');
+                        workModeButton.classList.remove('active');
+                    } else {
+                        currentMode = 'work';
+                        timeLeft = WORK_TIME;
+                        workModeButton.classList.add('active');
+                        breakModeButton.classList.remove('active');
+                    }
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        /**
+         * Pauses the Pomodoro timer.
+         */
+        function pauseTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+        }
+
+        /**
+         * Resets the Pomodoro timer to the current mode's default time.
+         */
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            timeLeft = currentMode === 'work' ? WORK_TIME : BREAK_TIME;
+            updateTimerDisplay();
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            resetButton.disabled = true;
+        }
+
+        /**
+         * Switches the timer mode (work/break).
+         * @param {string} mode - 'work' or 'break'.
+         */
+        function switchMode(mode) {
+            if (currentMode === mode) return; // Already in this mode
+            currentMode = mode;
+            resetTimer(); // Reset timer when switching modes
+            if (mode === 'work') {
+                workModeButton.classList.add('active');
+                breakModeButton.classList.remove('active');
+            } else {
+                breakModeButton.classList.add('active');
+                workModeButton.classList.remove('active');
+            }
+        }
+
+        // Pomodoro Timer Event Listeners
+        startButton.addEventListener('click', startTimer);
+        pauseButton.addEventListener('click', pauseTimer);
+        resetButton.addEventListener('click', resetTimer);
+        workModeButton.addEventListener('click', () => switchMode('work'));
+        breakModeButton.addEventListener('click', () => switchMode('break'));
+
+        // Initialize timer display
+        updateTimerDisplay();
+
+        // --- Weather Feature ---
+        const weatherIcon = document.getElementById('weatherIcon');
+        const weatherTemp = document.getElementById('weatherTemp');
+        const weatherDescription = document.getElementById('weatherDescription');
+        const weatherLocation = document.getElementById('weatherLocation');
+
+        // IMPORTANT: Replace with your actual OpenWeatherMap API key
+        // You can get one from https://openweathermap.org/api
+        const OPENWEATHER_API_KEY = 'YOUR_OPENWEATHER_API_KEY'; // Replace this!
+
+        /**
+         * Fetches weather data for a default city (London) since geolocation is disabled.
+         */
+        async function fetchDefaultWeather() {
+            if (OPENWEATHER_API_KEY === 'YOUR_OPENWEATHER_API_KEY') {
+                showMessageBox('Please replace YOUR_OPENWEATHER_API_KEY with a valid key to get weather data.', 'error', 7000);
+                weatherIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                weatherTemp.textContent = '--°C';
+                weatherDescription.textContent = 'API Key Missing';
+                weatherLocation.textContent = 'Update script.js';
+                return;
+            }
+
+            // Default to London coordinates
+            const lat = 51.5074;
+            const lon = 0.1278;
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                displayWeather(data);
+            } catch (error) {
+                console.error('Error fetching weather:', error);
+                showMessageBox('Failed to fetch weather data for default city. Please check your API key or network.', 'error');
+                weatherIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                weatherTemp.textContent = '--°C';
+                weatherDescription.textContent = 'Error';
+                weatherLocation.textContent = 'Could not load weather';
+            }
+        }
+
+        /**
+         * Displays the fetched weather data.
+         * @param {object} data - Weather data object from OpenWeatherMap API.
+         */
+        function displayWeather(data) {
+            const temp = Math.round(data.main.temp);
+            const description = data.weather[0].description;
+            const city = data.name;
+            const iconCode = data.weather[0].icon;
+
+            weatherTemp.textContent = `${temp}°C`;
+            weatherDescription.textContent = description;
+            weatherLocation.textContent = city;
+
+            // Map OpenWeatherMap icons to Font Awesome or simple emojis
+            let iconClass = '';
+            switch (iconCode.slice(0, 2)) { // Use first two chars for general weather
+                case '01': iconClass = 'fas fa-sun text-yellow-500'; break; // Clear sky
+                case '02': iconClass = 'fas fa-cloud-sun text-yellow-400'; break; // Few clouds
+                case '03':
+                case '04': iconClass = 'fas fa-cloud text-gray-500'; break; // Scattered/broken clouds
+                case '09':
+                case '10': iconClass = 'fas fa-cloud-showers-heavy text-blue-500'; break; // Rain
+                case '11': iconClass = 'fas fa-bolt text-yellow-600'; break; // Thunderstorm
+                case '13': iconClass = 'fas fa-snowflake text-blue-300'; break; // Snow
+                case '50': iconClass = 'fas fa-smog text-gray-400'; break; // Mist
+                default: iconClass = 'fas fa-question-circle text-gray-400'; break; // Unknown
+            }
+            weatherIcon.innerHTML = `<i class="${iconClass}"></i>`;
+        }
+
+        // --- Inspirational Quote Feature ---
+        const quoteText = document.getElementById('quoteText');
+        const quoteAuthor = document.getElementById('quoteAuthor');
+
+        const fallbackQuotes = [
+            { q: "The only way to do great work is to love what you do.", a: "Steve Jobs" },
+            { q: "Believe you can and you're halfway there.", a: "Theodore Roosevelt" },
+            { q: "The future belongs to those who believe in the beauty of their dreams.", a: "Eleanor Roosevelt" },
+            { q: "Strive not to be a success, but rather to be of value.", a: "Albert Einstein" },
+            { q: "The mind is everything. What you think you become.", a: "Buddha" },
+            { q: "The best way to predict the future is to create it.", a: "Abraham Lincoln" },
+            { q: "Innovation distinguishes between a leader and a follower.", a: "Steve Jobs" },
+            { q: "Life is what happens when you're busy making other plans.", a: "John Lennon" },
+            { q: "Get busy living or get busy dying.", a: "Stephen King" },
+            { q: "The greatest glory in living lies not in never falling, but in rising every time we fall.", a: "Nelson Mandela" }
+        ];
+
+        /**
+         * Fetches a random inspirational quote from the local fallback list.
+         */
+        function fetchQuote() {
+            const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
+            quoteText.textContent = `"${fallbackQuotes[randomIndex].q}"`;
+            quoteAuthor.textContent = `- ${fallbackQuotes[randomIndex].a}`;
+            showMessageBox('Displaying a local quote.', 'info');
+        }
+
+        // --- Initialization on Load ---
+        window.onload = function() {
+            loadMood();
+            loadTodos();
+            fetchDefaultWeather(); // Always fetch default weather
+            fetchQuote(); // Always use local quotes
+
+            // Refresh quote every 12 hours (adjust as needed)
+            setInterval(fetchQuote, 12 * 60 * 60 * 1000);
+        };
+    </script>
+</body>
+</html>
+�
